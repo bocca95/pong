@@ -1,49 +1,49 @@
 #include "pch.h"
 
-// Função para normalizar um vetor
-sf::Vector2f normalizar(const sf::Vector2f& vetor) {
-    float magnitude = std::sqrt(pow(vetor.x, 2) + pow(vetor.y, 2));
-    return sf::Vector2f(vetor.x / magnitude, vetor.y / magnitude);
+// FUNCTION TO NORMALIZE A VECTOR
+sf::Vector2f normalize(const sf::Vector2f& vector) {
+    float magnitude = std::sqrt(pow(vector.x, 2) + pow(vector.y, 2));
+    return sf::Vector2f(vector.x / magnitude, vector.y / magnitude);
 }
 
-// Função para calcular o novo vetor de velocidade com base no ponto de contato
-sf::Vector2f novaVelocidade(const sf::Vector2f& posBola, const sf::Vector2f& posPaddle, float heightPaddle, float velocidade) {
-    float intY = (posPaddle.y + heightPaddle / 2.0f) - posBola.y;
-    float intYNormal = (intY / (heightPaddle / 2.0f));
-    float anguloRebote = intYNormal * (M_PI / 4);
-    sf::Vector2f novaDirecao(-std::cos(anguloRebote), std::sin(anguloRebote));
+// FFUNCTION TO CALCULATE THE NEW VELOCITY BASED ON THE CONTACT POINT
+sf::Vector2f newVelocity(const sf::Vector2f& ballPos, const sf::Vector2f& paddlePos, float paddleHeight, float velocity) {
+    float intersectY = (paddlePos.y + paddleHeight / 2.0f) - ballPos.y;
+    float normalizedIntersectY = (intersectY / (paddleHeight / 2.0f));
+    float reboundAngle = normalizedIntersectY * (M_PI / 4);
+    sf::Vector2f newDirection(-std::cos(reboundAngle), std::sin(reboundAngle));
 
-    return normalizar(novaDirecao) * velocidade;
+    return normalize(newDirection) * velocity;
 }
 
 int main() {
-    // TAMANHO E DEFINIÇÃO DA JANELA
+    // WINDOW SIZE AND DEFINITION
     const int wWidth = 1024;
     const int wHeight = 720;
 
     sf::RenderWindow window(sf::VideoMode(wWidth, wHeight, 32), "Pong");
     window.setFramerateLimit(90);
 
-    // INICIALIZAÇÃO DOS PLACARES
+    // SCORE INIT.
     int score = 0;
     int score2 = 0;
 
     sf::Font font;
     if (!font.loadFromFile("./Minecraft.ttf")) {
-        std::cout << "Erro ao carregar a fonte!";
+        std::cout << "Error loading font!";
         exit(-1);
     }
 
-    // INICIALIZAÇÃO DA BOLA E PADDLES
+    // BALL AND PADDLES INITIALIZATION
     sf::CircleShape ball(10.f);
     ball.setFillColor(sf::Color::White);
-    float velocidadeInicial = 1.f;
+    float initialVelocity = 1.f;
     std::srand(static_cast<unsigned>(std::time(0)));
-    float direcaoX = (std::rand() % 2 == 0) ? velocidadeInicial : -velocidadeInicial;
-    float direcaoY = (std::rand() % 2 == 0) ? velocidadeInicial : -velocidadeInicial;
-    sf::Vector2f velocidadeBola(direcaoX, direcaoY);
+    float directionX = (std::rand() % 2 == 0) ? initialVelocity : -initialVelocity;
+    float directionY = (std::rand() % 2 == 0) ? initialVelocity : -initialVelocity;
+    sf::Vector2f ballVelocity(directionX, directionY);
     ball.setPosition(wWidth / 2, wHeight / 2);
-    float velocidadeMagnitude = 1.f;
+    float velocityMagnitude = 1.f;
 
     sf::RectangleShape paddle(sf::Vector2f(20.f, 100.f));
     paddle.setFillColor(sf::Color::White);
@@ -74,20 +74,20 @@ int main() {
     paused.setFillColor(sf::Color::White);
     paused.setString("");
 
-    bool pausado = false;
-    // LOOP PRINCIPAL
+    bool paused = false;
+    // MAIN LOOP
     while (window.isOpen()) {
-        // FECHANDO A JANELA
+        // WINDOW CLOSE
         sf::Event event;
         while (window.pollEvent(event)) {
             if (event.type == sf::Event::Closed)
                 window.close();
             if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape)
-                pausado = !pausado;
+                paused = !paused;
         }
 
-        if (!pausado) {
-            // MOVIMENTAÇÃO DO JOGO + COLISÕES
+        if (!paused) {
+            // GAME MOVEMENT
             if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left) && paddle.getPosition().y > 0) {
                 paddle.move(0.f, -1.0f);
             }
@@ -100,47 +100,47 @@ int main() {
             if (sf::Keyboard::isKeyPressed(sf::Keyboard::D) && paddle2.getPosition().y + paddle2.getSize().y < window.getSize().y) {
                 paddle2.move(0.f, 1.0f);
             }
-            ball.move(velocidadeBola);
+            ball.move(ballVelocity);
 
-            // Verificação de colisão com os paddles
+            // COLLISION DETECTIONS - PADDLES
             if (ball.getGlobalBounds().intersects(paddle.getGlobalBounds())) {
-                velocidadeBola = novaVelocidade(ball.getPosition(), paddle.getPosition(), paddle.getSize().x, velocidadeMagnitude);
+                ballVelocity = newVelocity(ball.getPosition(), paddle.getPosition(), paddle.getSize().x, velocityMagnitude);
 
             }
             if (ball.getGlobalBounds().intersects(paddle2.getGlobalBounds())) {
-                velocidadeBola = novaVelocidade(ball.getPosition(), paddle2.getPosition(), paddle2.getSize().y, velocidadeMagnitude);
+                ballVelocity = newVelocity(ball.getPosition(), paddle2.getPosition(), paddle2.getSize().y, velocityMagnitude);
 
             }
 
-            // Verificação de colisão com as bordas da janela
+            // COLLISION DETECTION - EDGES
             if (ball.getPosition().y < 0 || ball.getPosition().y + ball.getRadius() * 2 > window.getSize().y) {
-                velocidadeBola.y = -velocidadeBola.y;
+                ballVelocity.y = -ballVelocity.y;
             }
 
-            // Atualização do placar
+            // SCORE UPDATE
             if (ball.getPosition().x < 0) {
                 score2++;
                 sb2.setString(std::to_string(score2));
                 ball.setPosition(wWidth / 2, wHeight / 2);
-                velocidadeBola = sf::Vector2f(1.f, 1.f);
+                ballVelocity = sf::Vector2f(1.f, 1.f);
             }
             if (ball.getPosition().x + ball.getRadius() * 2 > window.getSize().x) {
                 score++;
                 sb1.setString(std::to_string(score));
                 ball.setPosition(wWidth / 2, wHeight / 2);
-                velocidadeBola = sf::Vector2f(-1.f, -1.f);
+                ballVelocity = sf::Vector2f(-1.f, -1.f);
             }
 
         }
-        if (pausado) {
-            paused.setString("PAUSADO");
-            // Verifica se a bola está sobrepondo o texto "PAUSADO"
+        if (paused) {
+            paused.setString("PAUSED");
+            // CHECK IF THE BALL IS IN THE "PAUSED" TEXT
             if (ball.getGlobalBounds().intersects(paused.getGlobalBounds())) {
                 ball.setFillColor(sf::Color::Black);
             }
 
         }
-        if (!pausado) {
+        if (!paused) {
             paused.setString("");
             ball.setFillColor(sf::Color::White);
         }
