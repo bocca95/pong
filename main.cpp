@@ -3,16 +3,20 @@
 // FUNCTION TO NORMALIZE A VECTOR
 sf::Vector2f normalize(const sf::Vector2f& vector) {
     float magnitude = std::sqrt(pow(vector.x, 2) + pow(vector.y, 2));
-    return sf::Vector2f(vector.x / magnitude, vector.y / magnitude);
+    if (magnitude != 0) {
+        return sf::Vector2f(vector.x / magnitude, vector.y / magnitude);
+    }
+    else {
+        return sf::Vector2f(0.f, 0.f);
+    }
 }
 
-// FFUNCTION TO CALCULATE THE NEW VELOCITY BASED ON THE CONTACT POINT
+// FUNCTION TO CALCULATE THE NEW VELOCITY BASED ON THE CONTACT POINT
 sf::Vector2f newVelocity(const sf::Vector2f& ballPos, const sf::Vector2f& paddlePos, float paddleHeight, float velocity) {
-    float intersectY = (paddlePos.y + paddleHeight / 2.0f) - ballPos.y;
-    float normalizedIntersectY = (intersectY / (paddleHeight / 2.0f));
-    float reboundAngle = normalizedIntersectY * (M_PI / 4);
+    float relativeY = ballPos.y - (paddlePos.y + paddleHeight / 2.0f);
+    float normalizedRelativeY = relativeY / (paddleHeight / 2.0f);
+    float reboundAngle = normalizedRelativeY * (M_PI / 4);
     sf::Vector2f newDirection(-std::cos(reboundAngle), std::sin(reboundAngle));
-
     return normalize(newDirection) * velocity;
 }
 
@@ -34,24 +38,24 @@ int main() {
         exit(-1);
     }
 
-    // BALL AND PADDLES INITIALIZATION
+    // BALL, PADDLES AND TEXT INIT.
     sf::CircleShape ball(10.f);
     ball.setFillColor(sf::Color::White);
-    float initialVelocity = 1.f;
+    float initialVelocity = 4.f;
     std::srand(static_cast<unsigned>(std::time(0)));
     float directionX = (std::rand() % 2 == 0) ? initialVelocity : -initialVelocity;
     float directionY = (std::rand() % 2 == 0) ? initialVelocity : -initialVelocity;
     sf::Vector2f ballVelocity(directionX, directionY);
     ball.setPosition(wWidth / 2, wHeight / 2);
-    float velocityMagnitude = 1.f;
+    float velocityMagnitude = initialVelocity;
 
-    sf::RectangleShape paddle(sf::Vector2f(20.f, 100.f));
-    paddle.setFillColor(sf::Color::White);
-    paddle.setPosition(30.f, wHeight / 2 - paddle.getSize().y / 2);
+    sf::RectangleShape Lpaddle(sf::Vector2f(20.f, 100.f));
+    Lpaddle.setFillColor(sf::Color::White);
+    Lpaddle.setPosition(30.f, wHeight / 2 - Lpaddle.getSize().y / 2);
 
-    sf::RectangleShape paddle2(sf::Vector2f(20.f, 100.f));
-    paddle2.setFillColor(sf::Color::White);
-    paddle2.setPosition(wWidth - 50.f, wHeight / 2 - paddle2.getSize().y / 2);
+    sf::RectangleShape Rpaddle(sf::Vector2f(20.f, 100.f));
+    Rpaddle.setFillColor(sf::Color::White);
+    Rpaddle.setPosition(wWidth - 50.f, wHeight / 2 - Rpaddle.getSize().y / 2);
 
     sf::Text sb1;
     sb1.setFont(font);
@@ -74,7 +78,7 @@ int main() {
     paused.setFillColor(sf::Color::White);
     paused.setString("");
 
-    bool paused = false;
+    bool pause = false;
     // MAIN LOOP
     while (window.isOpen()) {
         // WINDOW CLOSE
@@ -83,33 +87,36 @@ int main() {
             if (event.type == sf::Event::Closed)
                 window.close();
             if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape)
-                paused = !paused;
+                pause = !pause;
         }
 
-        if (!paused) {
+        if (!pause) {
             // GAME MOVEMENT
-            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left) && paddle.getPosition().y > 0) {
-                paddle.move(0.f, -1.0f);
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::A) && Lpaddle.getPosition().y > 0) {
+                Lpaddle.move(0.f, -4.0f);
             }
-            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right) && paddle.getPosition().y + paddle.getSize().y < window.getSize().y) {
-                paddle.move(0.f, 1.0f);
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::D) && Lpaddle.getPosition().y + Lpaddle.getSize().y < window.getSize().y) {
+                Lpaddle.move(0.f, 4.0f);
             }
-            if (sf::Keyboard::isKeyPressed(sf::Keyboard::A) && paddle2.getPosition().y > 0) {
-                paddle2.move(0.f, -1.0f);
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left) && Rpaddle.getPosition().y > 0) {
+                Rpaddle.move(0.f, -4.0f);
             }
-            if (sf::Keyboard::isKeyPressed(sf::Keyboard::D) && paddle2.getPosition().y + paddle2.getSize().y < window.getSize().y) {
-                paddle2.move(0.f, 1.0f);
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right) && Rpaddle.getPosition().y + Rpaddle.getSize().y < window.getSize().y) {
+                Rpaddle.move(0.f, 4.0f);
             }
             ball.move(ballVelocity);
 
-            // COLLISION DETECTIONS - PADDLES
-            if (ball.getGlobalBounds().intersects(paddle.getGlobalBounds())) {
-                ballVelocity = newVelocity(ball.getPosition(), paddle.getPosition(), paddle.getSize().x, velocityMagnitude);
-
+            // COLLISION DETECTIONS - LEFT PADDLE
+            if (ball.getGlobalBounds().intersects(Lpaddle.getGlobalBounds())) {
+                ballVelocity = newVelocity(ball.getPosition(), Lpaddle.getPosition(), Lpaddle.getSize().y, velocityMagnitude);
+                ballVelocity *= -1.f;
+                ball.setPosition(Lpaddle.getPosition().x + Lpaddle.getSize().x + 1, ball.getPosition().y);
             }
-            if (ball.getGlobalBounds().intersects(paddle2.getGlobalBounds())) {
-                ballVelocity = newVelocity(ball.getPosition(), paddle2.getPosition(), paddle2.getSize().y, velocityMagnitude);
 
+            // COLLISION DETECTIONS - RIGHT PADDLE
+            if (ball.getGlobalBounds().intersects(Rpaddle.getGlobalBounds())) {
+                ballVelocity = newVelocity(ball.getPosition(), Rpaddle.getPosition(), Rpaddle.getSize().y, velocityMagnitude);
+                ball.setPosition(Rpaddle.getPosition().x - ball.getRadius() * 2 - 1, ball.getPosition().y);
             }
 
             // COLLISION DETECTION - EDGES
@@ -130,28 +137,25 @@ int main() {
                 ball.setPosition(wWidth / 2, wHeight / 2);
                 ballVelocity = sf::Vector2f(-1.f, -1.f);
             }
-
         }
-        if (paused) {
+        if (pause) {
             paused.setString("PAUSED");
             // CHECK IF THE BALL IS IN THE "PAUSED" TEXT
             if (ball.getGlobalBounds().intersects(paused.getGlobalBounds())) {
                 ball.setFillColor(sf::Color::Black);
             }
-
         }
-        if (!paused) {
+        if (!pause) {
             paused.setString("");
             ball.setFillColor(sf::Color::White);
         }
-
-
+        // WINDOW CLEAR AND DRAWING OBJECTS
         window.clear();
         window.draw(sb1);
         window.draw(sb2);
         window.draw(ball);
-        window.draw(paddle);
-        window.draw(paddle2);
+        window.draw(Lpaddle);
+        window.draw(Rpaddle);
         window.draw(paused);
         window.display();
     }
