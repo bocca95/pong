@@ -8,3 +8,8 @@ Update 1:
 
 Update 2:
 - Paddle Collision and Ball Velocity issues fixed;
+
+Update 3:
+- Added PowerUp for both players;
+- Added progress bar for powerup;
+- Improving code readability and quality;
