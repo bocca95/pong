@@ -1,18 +1,22 @@
 #include "pch.h"
 
 // FUNCTION TO NORMALIZE A VECTOR
-sf::Vector2f normalize(const sf::Vector2f& vector) {
+sf::Vector2f normalize(const sf::Vector2f& vector) 
+{
     float magnitude = std::sqrt(pow(vector.x, 2) + pow(vector.y, 2));
-    if (magnitude != 0) {
+    if (magnitude != 0) 
+    {
         return sf::Vector2f(vector.x / magnitude, vector.y / magnitude);
     }
-    else {
+    else 
+    {
         return sf::Vector2f(0.f, 0.f);
     }
 }
 
 // FUNCTION TO CALCULATE THE NEW VELOCITY BASED ON THE CONTACT POINT
-sf::Vector2f newVelocity(const sf::Vector2f& ballPos, const sf::Vector2f& paddlePos, float paddleHeight, float velocity) {
+sf::Vector2f newVelocity(const sf::Vector2f& ballPos, const sf::Vector2f& paddlePos, float paddleHeight, float velocity) 
+{
     float relativeY = ballPos.y - (paddlePos.y + paddleHeight / 2.0f);
     float normalizedRelativeY = relativeY / (paddleHeight / 2.0f);
     float reboundAngle = normalizedRelativeY * (M_PI / 4);
@@ -21,43 +25,53 @@ sf::Vector2f newVelocity(const sf::Vector2f& ballPos, const sf::Vector2f& paddle
 }
 
 // FUNCTION TO INCREMENT POWERUP
-int pwrupIncrement(int& powerup, int score) {
-    if (score % 5 == 0) {
+int pwrupIncrement(int& powerup, int score) 
+{
+    if (score % 5 == 0) 
+    {
         powerup += 1;
     }
     return powerup;
 }
 
 // FUNCTION TO HANDLE PADDLE MOVEMENT
-void handlePaddleMovement(sf::RectangleShape& paddle, float moveUpKey, float moveDownKey, const sf::RenderWindow& window) {
-    if (sf::Keyboard::isKeyPressed(static_cast<sf::Keyboard::Key>(moveUpKey)) && paddle.getPosition().y > 0) {
+void handlePaddleMovement(sf::RectangleShape& paddle, float moveUpKey, float moveDownKey, const sf::RenderWindow& window) 
+{
+    if (sf::Keyboard::isKeyPressed(static_cast<sf::Keyboard::Key>(moveUpKey)) && paddle.getPosition().y > 0) 
+    {
         paddle.move(0.f, -4.0f);
     }
-    if (sf::Keyboard::isKeyPressed(static_cast<sf::Keyboard::Key>(moveDownKey)) && paddle.getPosition().y + paddle.getSize().y < window.getSize().y) {
+    if (sf::Keyboard::isKeyPressed(static_cast<sf::Keyboard::Key>(moveDownKey)) && paddle.getPosition().y + paddle.getSize().y < window.getSize().y) 
+    {
         paddle.move(0.f, 4.0f);
     }
 }
 
 // FUNCTION TO HANDLE BALL MOVEMENT AND COLLISION
-void handleBallMovementAndCollision(sf::CircleShape& ball, sf::Vector2f& ballVelocity, const sf::RenderWindow& window, sf::RectangleShape& Lpaddle, sf::RectangleShape& Rpaddle, float& velocityMagnitude) {
+void handleBallMovementAndCollision(sf::CircleShape& ball, sf::Vector2f& ballVelocity, const sf::RenderWindow& window, sf::RectangleShape& Lpaddle, sf::RectangleShape& Rpaddle, float& velocityMagnitude) 
+{
     ball.move(ballVelocity);
 
-    if (ball.getGlobalBounds().intersects(Lpaddle.getGlobalBounds())) {
+    if (ball.getGlobalBounds().intersects(Lpaddle.getGlobalBounds())) 
+    {
         ballVelocity = newVelocity(ball.getPosition(), Lpaddle.getPosition(), Lpaddle.getSize().y, velocityMagnitude);
         ballVelocity.x = -ballVelocity.x;
     }
 
-    if (ball.getGlobalBounds().intersects(Rpaddle.getGlobalBounds())) {
+    if (ball.getGlobalBounds().intersects(Rpaddle.getGlobalBounds())) 
+    {
         ballVelocity = newVelocity(ball.getPosition(), Rpaddle.getPosition(), Rpaddle.getSize().y, velocityMagnitude);
     }
 
-    if (ball.getPosition().y < 0 || ball.getPosition().y + ball.getRadius() * 2 > window.getSize().y) {
+    if (ball.getPosition().y < 0 || ball.getPosition().y + ball.getRadius() * 2 > window.getSize().y) 
+    {
         ballVelocity.y = -ballVelocity.y;
     }
 }
 
 // FUNCTION TO UPDATE SCORE
-void updateScore(sf::CircleShape& ball, sf::Vector2f& ballVelocity, sf::Text& scoreText, int& score, int& pwr_count, int wWidth, int wHeight, bool& powerup, sf::Text& powerUpText) {
+void updateScore(sf::CircleShape& ball, sf::Vector2f& ballVelocity, sf::Text& scoreText, int& score, int& pwr_count, int wWidth, int wHeight, bool& powerup, sf::Text& powerUpText) 
+{
     score++;
     pwrupIncrement(pwr_count, score);
     scoreText.setString(std::to_string(score));
@@ -67,7 +81,8 @@ void updateScore(sf::CircleShape& ball, sf::Vector2f& ballVelocity, sf::Text& sc
 }
 
 // FUNCTION TO HANDLE POWERUP STATE
-void handlePowerupState(sf::Vector2f& ballVelocity, bool& powerup) {
+void handlePowerupState(sf::Vector2f& ballVelocity, bool& powerup) 
+{
     if (powerup) {
         ballVelocity.x = ballVelocity.x * 2.5f;
         ballVelocity.y = ballVelocity.y * 2.5f;
@@ -76,24 +91,30 @@ void handlePowerupState(sf::Vector2f& ballVelocity, bool& powerup) {
 }
 
 // FUNCTION TO HANDLE PAUSE STATE
-void handlePauseState(sf::Text& paused, sf::CircleShape& ball, bool pause) {
-    if (pause) {
+void handlePauseState(sf::Text& paused, sf::CircleShape& ball, bool pause) 
+{
+    if (pause) 
+    {
         paused.setString("PAUSED");
-        if (ball.getGlobalBounds().intersects(paused.getGlobalBounds())) {
+        if (ball.getGlobalBounds().intersects(paused.getGlobalBounds())) 
+        {
             ball.setFillColor(sf::Color::Black);
         }
     }
-    else {
+    else 
+    {
         paused.setString("");
         ball.setFillColor(sf::Color::White);
     }
 }
 
 
-void drawProgress(int& count, sf::RenderWindow& window, sf::RectangleShape& progresso, sf::RectangleShape& progressoPlayer) {
+void drawProgress(int& count, sf::RenderWindow& window, sf::RectangleShape& progresso, sf::RectangleShape& progressoPlayer) 
+{
     sf::Vector2f size = progresso.getSize();
 
-    if (count < 4) {
+    if (count < 4) 
+    {
         progressoPlayer.setSize(sf::Vector2f((size.x / 5) * (count + 1), size.y));
         count++;
     }
@@ -204,17 +225,20 @@ int main() {
 
 
     // MAIN LOOP
-    while (window.isOpen()) {
+    while (window.isOpen()) 
+    {
         // WINDOW CLOSE
         sf::Event event;
-        while (window.pollEvent(event)) {
+        while (window.pollEvent(event)) 
+        {
             if (event.type == sf::Event::Closed)
                 window.close();
             if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape)
                 pause = !pause;
             if (p1_power > 0) 
             {
-                if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::H) {
+                if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::H) 
+                {
                     powerup = true;
                     p1_power -= 1;
                     player1.setString(std::to_string(p1_power));
@@ -222,7 +246,8 @@ int main() {
             }
             if (p2_power > 0)
             {
-                if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::M) {
+                if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::M) 
+                {
                     powerup = true;
                     p2_power -= 1;
                     player2.setString(std::to_string(p2_power));
@@ -234,18 +259,21 @@ int main() {
         handlePowerupState(ballVelocity, powerup);
         handlePauseState(paused, ball, pause);
 
-        if (!pause) {
+        if (!pause) 
+        {
             handlePaddleMovement(Lpaddle, sf::Keyboard::A, sf::Keyboard::D, window);
             handlePaddleMovement(Rpaddle, sf::Keyboard::Left, sf::Keyboard::Right, window);
 
             handleBallMovementAndCollision(ball, ballVelocity, window, Lpaddle, Rpaddle, velocityMagnitude);
 
             
-            if (ball.getPosition().x + ball.getRadius() * 2 > window.getSize().x) {
+            if (ball.getPosition().x + ball.getRadius() * 2 > window.getSize().x) 
+            {
                 updateScore(ball, ballVelocity, sb1, score, p1_power, wWidth, wHeight, powerup, player1);
                 drawProgress(count1, window, progressbar, progressp1);  // Change this to draw progress for player 2 if needed
             }
-            if (ball.getPosition().x < 0) {
+            if (ball.getPosition().x < 0) 
+            {
                 updateScore(ball, ballVelocity, sb2, score2, p2_power, wWidth, wHeight, powerup, player2);
                 drawProgress(count2, window, progressbar, progressp2);
             }
